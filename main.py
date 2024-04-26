@@ -17,11 +17,6 @@ class App:
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
         tile_at = pyxel.tilemaps[1].pget
-        # for y in range(16):
-        #     string = ""
-        #     for x in range(16):
-        #         string += str(int(tile_at(x, y) in WALLS))
-        #     print(string)
         pyxel.run(self.update, self.draw)
 
     def update(self) -> None:
@@ -31,7 +26,6 @@ class App:
         pyxel.camera(self.player.x - (self.player.x + 4) % 128 + 4, 0)
         pyxel.bltm(0, 0, 1, 0, 0, 512, 128)
         self.player.draw()
-
         
 
 class Player:
@@ -59,7 +53,6 @@ class Player:
             and tile_at((self.x - 1) // 8, (self.y + 7) // 8) not in WALLS
         ):
             self.x -= 1
-        # print(tile_at(self.x // 8 + 1, self.y), tile_at(self.x // 8 + 1, self.y + 7))
     
     def draw(self) -> None:
         pyxel.blt(self.x, self.y, 0, 8, 0, 8, 8, TRANSPARENT)
