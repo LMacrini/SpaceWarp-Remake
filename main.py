@@ -45,16 +45,16 @@ class Player:
         elif pyxel.btn(pyxel.KEY_UP):
             self.jumping = 12
 
-        if self.jumping > 0:
-            self.jumping -= 1
-            self.y -= 2
-        
         if (
             tile_at(self.x // 8, (self.y - 1) // 8) in WALLS
             or tile_at((self.x + 7) // 8, (self.y - 1) // 8) in WALLS
         ):
             self.jumping = 0
 
+        if self.jumping > 0:
+            self.jumping -= 1
+            self.y -= 2
+        
         
         if (pyxel.btn(pyxel.KEY_RIGHT)
             and tile_at(self.x // 8 + 1, self.y // 8) not in WALLS
