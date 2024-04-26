@@ -11,12 +11,12 @@ class App:
     def __init__(self):
         global tile_at
 
-        self.difficulty: int | None = None
+        self.difficulty: int = 1
         self.player = Player()
 
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
-        tile_at = pyxel.tilemaps[1].pget
+        tile_at = pyxel.tilemaps[self.difficulty].pget
         pyxel.run(self.update, self.draw)
 
     def update(self) -> None:
@@ -30,24 +30,37 @@ class App:
 
 class Player:
     def __init__(self, x: int = 0, y: int = 0, *, direction: bool = RIGHT):
-        self.x = x
-        self.y = y
-        self.direction = direction
+        self.x: int = x
+        self.y: int = y
+        self.jumping = 0
+        self.direction: bool = direction
     
     def update(self) -> None:
-        if pyxel.btn(pyxel.KEY_UP) and (
-            tile_at(self.x // 8, (self.y - 1) // 8) not in WALLS
-            and tile_at((self.x + 7) // 8, (self.y - 1) // 8) not in WALLS
+        if (tile_at(self.x // 8, self.y // 8 + 1) not in WALLS
+            and tile_at((self.x + 7) // 8, self.y // 8 + 1) not in WALLS
         ):
+            if self.jumping == 0:
+                self.y += 2
+        
+        elif pyxel.btn(pyxel.KEY_UP):
+            self.jumping = 12
+
+        if self.jumping > 0:
+            self.jumping -= 1
             self.y -= 2
-        elif (tile_at(self.x // 8, self.y // 8 + 1) not in WALLS
-            and tile_at((self.x + 7) // 8, self.y // 8 + 1) not in WALLS):
-            self.y += 2
+        
+        if (
+            tile_at(self.x // 8, (self.y - 1) // 8) in WALLS
+            or tile_at((self.x + 7) // 8, (self.y - 1) // 8) in WALLS
+        ):
+            self.jumping = 0
+
         
         if (pyxel.btn(pyxel.KEY_RIGHT)
             and tile_at(self.x // 8 + 1, self.y // 8) not in WALLS
             and tile_at(self.x // 8 + 1, (self.y + 7) // 8) not in WALLS):
             self.x += 1
+        
         elif self.x > 0 and pyxel.btn(pyxel.KEY_LEFT) and (
             tile_at((self.x - 1) // 8, self.y // 8) not in WALLS
             and tile_at((self.x - 1) // 8, (self.y + 7) // 8) not in WALLS
