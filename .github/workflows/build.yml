@@ -1,0 +1,88 @@
+name: Build SpaceWarp
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions: write-all
+
+#concurrency:
+#  group: "pages"
+#  cancel-in-progress: false
+
+jobs:
+
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Install Python Packages
+        run: pip install -r requirements.txt
+
+      - name: Package App
+        run: pyxel package ./ ./main.py
+
+      - name: Build App
+        run: pyxel app2exe ./SpaceWarp-Remake.pyxapp
+
+      - name: Create Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}-${{ matrix.build-type }}
+          path: |
+            ./SpaceWarp-Remake*
+            !./SpaceWarp-Remake.pyxapp
+
+  # web:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: 3.x
+
+  #     - name: Install Python Packages
+  #       run: pip install -r requirements.txt
+
+  #     - name: Package App
+  #       run: pyxel package ./ ./main.py
+
+  #     - name: Build App
+  #       run: pyxel app2html ./SpaceWarp-Remake.pyxapp
+
+  #     - name: Rename File
+  #       run: |
+  #         mkdir ./web
+  #         mv ./SpaceWarp-Remake.html ./web/index.html
+
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v3
+
+  #     - name: Create Artifact
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: web
+  #         path: ./web/
+
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v2
+  #       with:
+  #         artifact_name: web
