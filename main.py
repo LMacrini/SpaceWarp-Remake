@@ -11,7 +11,13 @@ SPAWN_Y: int
 RIGHT, LEFT = False, True
 TRANSPARENT: int = 0 # used for transparency when drawing
 
+KEYS: dict[Tile, str] = {
+    (7, 4) : "yellow",
+    (7, 5) : "red",
+    (7, 6) : "blue"
+}
 EMPTY_TILE: Tile = (0, 0)
+END_TILE: Tile = (0, 1)
 FIRES: list[Tile] = [(x, y) for x in range(2) for y in range(2, 4)]
 WALLS: list[Tile] = ([(x, y) for x in range(4, 8) for y in range(2)]
                     + [(x, y) for x in range(2, 6) for y in range(2, 4)])
@@ -28,6 +34,8 @@ class App:
 
         tile_at = pyxel.tilemaps[self.difficulty].pget
         tile_set = pyxel.tilemaps[self.difficulty].pset
+
+        self.nrooms: int = self.get_nrooms()
 
         for y in range(16):
             for x in range(64):
@@ -59,6 +67,12 @@ class App:
         pyxel.camera(self.camera * 128, 0)
         pyxel.bltm(0, 0, 1, 0, 0, 512, 128)
         self.player.draw()
+    
+    def get_nrooms(self) -> int:
+        for i in range(1, 16):
+            if tile_at(16*i, 0) == END_TILE:
+                return i
+        return 16
         
 
 class Player:
