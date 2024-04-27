@@ -1,2 +1,6 @@
 .mypy_cache
-.DC_Store
+*\.DS_Store
+*.pyxapp
+build
+*.app
+SpaceWarp-Remake
