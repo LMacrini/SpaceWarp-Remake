@@ -14,7 +14,7 @@ TRANSPARENT: int = 0 # used for transparency when drawing
 EMPTY_TILE: Tile = (0, 0)
 FIRES: list[Tile] = [(x, y) for x in range(2) for y in range(2, 4)]
 WALLS: list[Tile] = ([(x, y) for x in range(4, 8) for y in range(2)]
-                             + [(x, y) for x in range(2, 6) for y in range(2, 4)])
+                    + [(x, y) for x in range(2, 6) for y in range(2, 4)])
 
 class App:
     def __init__(self):
