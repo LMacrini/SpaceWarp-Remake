@@ -7,9 +7,9 @@ on:
 
 permissions: write-all
 
-# concurrency:
-#   group: "pages"
-#   cancel-in-progress: false
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
 
@@ -52,43 +52,30 @@ jobs:
             ./SpaceWarp-Remake*
             !./SpaceWarp-Remake.pyxapp
 
-  # web:
-  #   runs-on: ubuntu-latest
+      - name: Build Website
+        if: matrix.os == 'ubuntu-latest'
+        run: pyxel app2html ./SpaceWarp-Remake.pyxapp
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
+      - name: Move File
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir ./web
+          mv ./SpaceWarp-Remake.html ./web/index.html
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: 3.x
+      - name: Setup Website
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/configure-pages@v5
 
-  #     - name: Install Python Packages
-  #       run: pip install -r requirements.txt
+      - name: Create Website
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: ./web/
 
-  #     - name: Package App
-  #       run: pyxel package ./ ./main.py
-
-  #     - name: Build App
-  #       run: pyxel app2html ./SpaceWarp-Remake.pyxapp
-
-  #     - name: Rename File
-  #       run: |
-  #         mkdir ./web
-  #         mv ./SpaceWarp-Remake.html ./web/index.html
-
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v3
-
-  #     - name: Create Artifact
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: web
-  #         path: ./web/
-
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v2
-  #       with:
-  #         artifact_name: web
+      - name: Deploy Website
+        if: matrix.os == 'ubuntu-latest'
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: web
