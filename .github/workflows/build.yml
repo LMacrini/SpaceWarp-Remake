@@ -16,7 +16,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -34,8 +35,7 @@ jobs:
       #   run: sudo apt-get install libasound2-dev
 
       - name: Install Python Packages
-        # run: pip install -r requirements.txt
-        run: pip install pyxel pyinstaller
+        run: pip install -r requirements.txt
 
       - name: Package App
         run: pyxel package ./ ./main.py
