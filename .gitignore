@@ -3,4 +3,5 @@
 *.pyxapp
 build
 *.app
+*.exe
 SpaceWarp-Remake
