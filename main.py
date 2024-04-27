@@ -1,7 +1,10 @@
 import pyxel
+from typing import Callable
 
-tile_at: callable
+tile_at: Callable
 
+SPAWN_X: int
+SPAWN_Y: int
 RIGHT, LEFT = False, True
 TRANSPARENT: int = 0 # used for transparency when drawing
 FIRES: list[tuple[int, int]] = [(x, y) for x in range(2) for y in range(2, 4)]
@@ -9,22 +12,43 @@ WALLS: list[tuple[int, int]] = [(x, y) for x in range(4, 8) for y in range(2)] +
 
 class App:
     def __init__(self):
-        global tile_at
+        global tile_at, SPAWN_X, SPAWN_Y
 
         self.difficulty: int = 1
         self.player = Player()
 
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
+
         tile_at = pyxel.tilemaps[self.difficulty].pget
+        for y in range(64):
+            for x in range(64):
+                if tile_at(x, y) == (3, 4):
+                    SPAWN_X, SPAWN_Y = x * 8, y * 8
+                    break
+            else:
+                continue
+            break
+
+        self.spawn: tuple[int, int] = (SPAWN_X, SPAWN_Y)
+        self.camera: int = 0
+
         pyxel.run(self.update, self.draw)
 
     def update(self) -> None:
-        self.player.update()
+        if self.camera != (self.player.x + 4) // 128:
+            self.spawn = (
+                self.player.x + 4 - 8 * int(self.camera > (self.player.x + 4) // 128), 
+                self.player.y
+            )
+            self.camera = (self.player.x + 4) // 128
+
+        self.player.update(self.spawn)
 
     def draw(self) -> None:
-        pyxel.camera(self.player.x - (self.player.x + 4) % 128 + 4, 0)
+        pyxel.camera(self.camera * 128, 0)
         pyxel.bltm(0, 0, 1, 0, 0, 512, 128)
+        pyxel.blt(SPAWN_X, SPAWN_Y, 0, 0, 0, 8, 8)
         self.player.draw()
         
 
@@ -32,10 +56,21 @@ class Player:
     def __init__(self, x: int = 0, y: int = 0, *, direction: bool = RIGHT):
         self.x: int = x
         self.y: int = y
-        self.jumping = 0
+        self.jumping: int = 0
+        self.dead: bool = False
         self.direction: bool = direction
     
-    def update(self) -> None:
+    def corners(self) -> tuple[tuple[int, int], ...]:
+        return (
+            tile_at(self.x // 8, self.y // 8),
+            tile_at(self.x // 8, (self.y + 7) // 8),
+            tile_at((self.x + 7) // 8, self.y // 8),
+            tile_at((self.x + 7) // 8, (self.y + 7) // 8)
+        )
+    
+    def update(self, spawn: tuple[int, int] = (0, 0)) -> None:
+        # if self.dead: return
+        
         if (tile_at(self.x // 8, self.y // 8 + 1) not in WALLS
             and tile_at((self.x + 7) // 8, self.y // 8 + 1) not in WALLS
         ):
@@ -60,14 +95,23 @@ class Player:
             and tile_at(self.x // 8 + 1, self.y // 8) not in WALLS
             and tile_at(self.x // 8 + 1, (self.y + 7) // 8) not in WALLS):
             self.x += 1
+            self.direction = RIGHT
         
         elif self.x > 0 and pyxel.btn(pyxel.KEY_LEFT) and (
             tile_at((self.x - 1) // 8, self.y // 8) not in WALLS
             and tile_at((self.x - 1) // 8, (self.y + 7) // 8) not in WALLS
         ):
             self.x -= 1
+            self.direction = LEFT
+        
+        if any((tile in FIRES for tile in self.corners())):
+            self.dead = True
+            self.x, self.y = spawn
+            self.jumping = 0
+            self.direction = RIGHT
     
     def draw(self) -> None:
+        # if self.dead: return
         pyxel.blt(self.x, self.y, 0, 8, 0, 8, 8, TRANSPARENT)
 
 
