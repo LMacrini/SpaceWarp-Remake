@@ -16,7 +16,6 @@ class App:
         global tile_at, SPAWN_X, SPAWN_Y
 
         self.difficulty: int = 1
-        self.player = Player()
 
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
@@ -32,6 +31,7 @@ class App:
             break
 
         self.spawn: tuple[int, int] = (SPAWN_X, SPAWN_Y)
+        self.player = Player(self.spawn)
         self.camera: int = 0
 
         pyxel.run(self.update, self.draw)
@@ -54,9 +54,9 @@ class App:
         
 
 class Player:
-    def __init__(self, x: int = 0, y: int = 0, *, direction: bool = RIGHT):
-        self.x: int = x
-        self.y: int = y
+    def __init__(self, spawn: tuple[int, int] = (0, 0), *, direction: bool = RIGHT):
+        self.x: int = spawn[0]
+        self.y: int = spawn[1]
         self.jumping: int = 0
         self.dead: bool = False
 
