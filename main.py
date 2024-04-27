@@ -2,18 +2,24 @@ import pyxel
 from typing import Callable
 
 tile_at: Callable
+tile_set: Callable
+
+type Tile = tuple[int, int]
 
 SPAWN_X: int
 SPAWN_Y: int
 RIGHT, LEFT = False, True
 TRANSPARENT: int = 0 # used for transparency when drawing
-FIRES: list[tuple[int, int]] = [(x, y) for x in range(2) for y in range(2, 4)]
-WALLS: list[tuple[int, int]] = ([(x, y) for x in range(4, 8) for y in range(2)]
+
+EMPTY_TILE: Tile = (0, 0)
+FIRES: list[Tile] = [(x, y) for x in range(2) for y in range(2, 4)]
+WALLS: list[Tile] = ([(x, y) for x in range(4, 8) for y in range(2)]
                              + [(x, y) for x in range(2, 6) for y in range(2, 4)])
 
 class App:
     def __init__(self):
-        global tile_at, SPAWN_X, SPAWN_Y
+        global tile_at, tile_set
+        global SPAWN_X, SPAWN_Y
 
         self.difficulty: int = 1
 
@@ -21,16 +27,19 @@ class App:
         pyxel.load("assets.pyxres")
 
         tile_at = pyxel.tilemaps[self.difficulty].pget
-        for y in range(64):
+        tile_set = pyxel.tilemaps[self.difficulty].pset
+
+        for y in range(16):
             for x in range(64):
                 if tile_at(x, y) == (3, 4):
+                    tile_set(x, y, (0, 0))
                     SPAWN_X, SPAWN_Y = x * 8, y * 8
                     break
             else:
                 continue
             break
 
-        self.spawn: tuple[int, int] = (SPAWN_X, SPAWN_Y)
+        self.spawn: Tile = (SPAWN_X, SPAWN_Y)
         self.player = Player(self.spawn)
         self.camera: int = 0
 
@@ -49,12 +58,11 @@ class App:
     def draw(self) -> None:
         pyxel.camera(self.camera * 128, 0)
         pyxel.bltm(0, 0, 1, 0, 0, 512, 128)
-        pyxel.blt(SPAWN_X, SPAWN_Y, 0, 0, 0, 8, 8)
         self.player.draw()
         
 
 class Player:
-    def __init__(self, spawn: tuple[int, int] = (0, 0), *, direction: bool = RIGHT):
+    def __init__(self, spawn: Tile = (0, 0), *, direction: bool = RIGHT):
         self.x: int = spawn[0]
         self.y: int = spawn[1]
         self.jumping: int = 0
@@ -65,7 +73,7 @@ class Player:
         self.sprite_y: int = 0
         self.walking_anim: bool = False
     
-    def corners(self) -> tuple[tuple[int, int], ...]:
+    def corners(self) -> tuple[Tile, Tile, Tile, Tile]:
         return (
             tile_at(self.x // 8, self.y // 8),
             tile_at(self.x // 8, (self.y + 7) // 8),
@@ -73,7 +81,7 @@ class Player:
             tile_at((self.x + 7) // 8, (self.y + 7) // 8)
         )
     
-    def update(self, spawn: tuple[int, int] = (0, 0)) -> None:
+    def update(self, spawn: Tile = (0, 0)) -> None:
         # if self.dead: return
         
         if (tile_at(self.x // 8, self.y // 8 + 1) not in WALLS
