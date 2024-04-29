@@ -143,11 +143,9 @@ class Doors:
     def update(self) -> None:
         if self.timer > 0:
             self.timer -= 1
-        
-        self.state = not bool(self.timer)
     
     def draw(self) -> None:
-        if self.state:
+        if self.state and not self.timer:
             for x, y in self.locations:
                 tile_set(x, y, self.sprite)
                 tile_set(x, y + 1, (self.sprite[0], self.sprite[1] + 1))
