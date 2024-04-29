@@ -250,7 +250,7 @@ class Player:
         self.sprite_x = 8*(self.direction^self.walking_anim) + 8 if self.jumping == 0 else 24
         self.sprite_y = 8*self.direction
 
-        if any((tile in FIRES for tile in corners)):
+        if pyxel.btn(pyxel.KEY_R) or any((tile in FIRES for tile in corners)):
             self.dead = True
             self.x, self.y = spawn
             self.jumping = 0
