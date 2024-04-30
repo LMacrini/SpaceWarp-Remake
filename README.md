@@ -8,6 +8,8 @@
     <a href="https://github.com/LMacrini/SpaceWarp-Remake/actions">Download Game</a>
 </p>
 
+<br>
+
 ## How to Play
 
 ## Controls
