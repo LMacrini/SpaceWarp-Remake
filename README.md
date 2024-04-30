@@ -1,4 +1,6 @@
-<img align="center" src="https://raw.githubusercontent.com/ForkPrince/SpaceWarp/editor/img/menu/icon.png" width="256px" height="256px">
+<p align="center">
+    <img src="https://raw.githubusercontent.com/ForkPrince/SpaceWarp/editor/img/menu/icon.png" width="256px" height="256px">
+</p>
 
 <h1 align="center">SpaceWarp (remake)</h1>
 
