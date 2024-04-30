@@ -1,9 +1,6 @@
-<h1 align="center">SpaceWarp (remake)</h1>
+<img align="center" src="https://raw.githubusercontent.com/ForkPrince/SpaceWarp/editor/img/menu/icon.png" width="256px" height="256px">
 
-<h1 align="center">
-    <img src="https://raw.githubusercontent.com/ForkPrince/SpaceWarp/editor/img/menu/icon.png" width="256px" height="256px">
-    SpaceWarp (remake)
-</h1>
+<h1 align="center">SpaceWarp (remake)</h1>
 
 <p align="center">
     <a href="https://lmacrini.github.io/SpaceWarp-Remake">Play Game</a>
