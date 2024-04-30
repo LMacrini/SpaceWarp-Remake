@@ -2,13 +2,11 @@
 
 <p align="center">A game that barely works, now revamped.</p>
 
-**[Play the game](https://lmacrini.github.io/SpaceWarp-Remake/)** or [download the latest version](https://github.com/LMacrini/SpaceWarp-Remake/actions) *(Note: Mac builds are still broken 😞)*.
-
-## Improvements
-
-- Streamlined, Enhanced, and Type-Secure Code
-- Eliminated the need for the mask file
-- Can handle up to 16 levels
+<p align="center">
+    <a href="Play Game">https://lmacrini.github.io/SpaceWarp-Remake/</a>
+    -
+    <a href="Download Game">https://github.com/LMacrini/SpaceWarp-Remake/actions</a>
+</p>
 
 ## How to Play
 
@@ -28,3 +26,9 @@ Your mission is to reach the spaceship and emerge victorious. But beware, the pa
 
 - Activate buttons by pressing and holding them. Doing so will open doors of the same color for 5 seconds.
 - Gather keys to permanently unlock all doors of the corresponding color.
+
+## Improvements
+
+- Streamlined, Enhanced, and Type-Secure Code
+- Eliminated the need for the mask file
+- Can handle up to 16 levels
