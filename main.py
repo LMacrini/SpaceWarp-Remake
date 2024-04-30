@@ -1,6 +1,7 @@
 #region imports
 from __future__ import annotations
 import pyxel
+from copy import deepcopy
 from typing import Callable, Any
 
 tile_at: Callable
@@ -73,11 +74,17 @@ class Keys:
     
     def collect(self, doors: set[Doors]):
         self.state = False
-        for x, y in self.locations:
-            tile_set(x, y, EMPTY_TILE)
 
         for door in doors:
             door.open_door(self.sprite)
+    
+    def update(self):
+        if self.state:
+            for x, y in self.locations:
+                tile_set(x, y, self.sprite)
+        else:
+            for x, y in self.locations:
+                tile_set(x, y, EMPTY_TILE)
 
 # region Buttons
 class Buttons:
@@ -322,7 +329,15 @@ class App:
         self.player = Player(self.spawn)
         self.camera: int = 0
 
+        self.save_state()
+
         pyxel.run(self.update, self.draw)
+    
+    def save_state(self) -> None:
+        self.saved_state = deepcopy((self.keys, self.buttons, self.doors))
+    
+    def load_state(self) -> None:
+        self.keys, self.buttons, self.doors = deepcopy(self.saved_state)
 
     # region App.update()
     def update(self) -> None:
@@ -332,11 +347,7 @@ class App:
                 self.player.y
             )
             self.camera = (self.player.x + 4) // 128
-        for doors in self.doors[self.camera].values():
-            doors.update()
-
-        for buttons in self.buttons[self.camera].values():
-            buttons.update()
+            self.save_state()
 
         self.player.update(
             self.spawn, 
@@ -344,6 +355,19 @@ class App:
             self.buttons[self.camera], 
             set(self.doors[self.camera].values())
         )
+
+        if self.player.dead:
+            self.load_state()
+            self.player.dead = False
+
+        for doors in self.doors[self.camera].values():
+            doors.update()
+
+        for buttons in self.buttons[self.camera].values():
+            buttons.update()
+        
+        for keys in self.keys[self.camera].values():
+            keys.update()
 
     def draw(self) -> None:
         pyxel.camera(self.camera * 128, 0)
