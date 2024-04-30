@@ -2,6 +2,7 @@
 from __future__ import annotations
 import pyxel
 from copy import deepcopy
+from webbrowser import open as wb_open
 from typing import Callable, Any
 
 tile_at: Callable
@@ -29,7 +30,11 @@ FIRES: set[Tile] = {(x, y) for x in range(2) for y in range(2, 4)}
 WALLS: set[Tile] = ({(x, y) for x in range(4, 8) for y in range(2)}
                     | {(x, y) for x in range(2, 6) for y in range(2, 4)})
 
-COLLIDERS = WALLS | DOORS
+COLLIDERS: set[Tile] = WALLS | DOORS
+
+MENU: int = 0
+PLAYING: int = 1
+END: int = 2
 
 def is_tile(foo: Any):
     try:
@@ -287,13 +292,95 @@ class Player:
 # region App
 class App:
     def __init__(self):
-        global tile_at, tile_set
-
         self.difficulty: int = 1
         self.spawn: Tile = (0, 0)
 
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
+
+        self.game_state: int = MENU
+
+        self.default_menu: list[tuple] = [
+            ("Start", self.start),
+            ("Difficulty", self.menu_difficulty),
+            ("Help", self.get_help)
+        ]
+
+        self.difficulty_menu: list[tuple] = [
+            ("Easy", self.change_difficulty),
+            ("Normal", self.change_difficulty),
+            ("Hard", self.change_difficulty),
+            ("Lunatic", self.change_difficulty),
+            ("Back", self.difficulty_back)
+        ]
+        
+        self.selected_option: int = 0
+        self.current_menu: list[tuple] = self.default_menu
+
+        pyxel.run(self.update, self.draw)
+    
+    def save_state(self) -> None:
+        self.saved_state = deepcopy((self.keys, self.buttons, self.doors))
+    
+    def load_state(self) -> None:
+        self.keys, self.buttons, self.doors = deepcopy(self.saved_state)
+
+    # region App.update()
+    def update(self) -> None:
+        if self.game_state == MENU:
+            self.update_menu()
+            return
+
+        if self.camera != (self.player.x + 4) // 128:
+            self.spawn = (
+                self.player.x + 4 - 8 * int(self.camera > (self.player.x + 4) // 128), 
+                self.player.y
+            )
+            self.camera = (self.player.x + 4) // 128
+            self.save_state()
+
+        self.player.update(
+            self.spawn, 
+            self.keys[self.camera], 
+            self.buttons[self.camera], 
+            set(self.doors[self.camera].values())
+        )
+
+        if self.player.dead:
+            self.load_state()
+            self.player.dead = False
+
+        for doors in self.doors[self.camera].values():
+            doors.update()
+
+        for buttons in self.buttons[self.camera].values():
+            buttons.update()
+        
+        for keys in self.keys[self.camera].values():
+            keys.update()
+
+    def draw(self) -> None:
+        if self.game_state == MENU:
+            self.draw_menu()
+            return
+
+        pyxel.camera(self.camera * 128, 0)
+        pyxel.bltm(0, 0, self.difficulty, 0, 0, 512, 128)
+        for doors in self.doors[self.camera].values():
+            doors.draw()
+        for buttons in self.buttons[self.camera].values():
+            buttons.draw()
+        self.player.draw()
+    
+    def get_nrooms(self) -> int:
+        for i in range(1, 16):
+            if tile_at(16*i, 0) == END_TILE:
+                return i
+        return 16
+    
+    # region Menu functions
+    def start(self) -> None:
+        global tile_at, tile_set
 
         tile_at = pyxel.tilemaps[self.difficulty].pget
         tile_set = pyxel.tilemaps[self.difficulty].pset
@@ -340,60 +427,41 @@ class App:
         self.camera: int = 0
 
         self.save_state()
-
-        pyxel.run(self.update, self.draw)
+        self.game_state = PLAYING
     
-    def save_state(self) -> None:
-        self.saved_state = deepcopy((self.keys, self.buttons, self.doors))
+    def get_help(self) -> None:
+        wb_open("https://github.com/LMacrini/SpaceWarp/blob/main/README.md")
     
-    def load_state(self) -> None:
-        self.keys, self.buttons, self.doors = deepcopy(self.saved_state)
-
-    # region App.update()
-    def update(self) -> None:
-        if self.camera != (self.player.x + 4) // 128:
-            self.spawn = (
-                self.player.x + 4 - 8 * int(self.camera > (self.player.x + 4) // 128), 
-                self.player.y
-            )
-            self.camera = (self.player.x + 4) // 128
-            self.save_state()
-
-        self.player.update(
-            self.spawn, 
-            self.keys[self.camera], 
-            self.buttons[self.camera], 
-            set(self.doors[self.camera].values())
-        )
-
-        if self.player.dead:
-            self.load_state()
-            self.player.dead = False
-
-        for doors in self.doors[self.camera].values():
-            doors.update()
-
-        for buttons in self.buttons[self.camera].values():
-            buttons.update()
-        
-        for keys in self.keys[self.camera].values():
-            keys.update()
-
-    def draw(self) -> None:
-        pyxel.camera(self.camera * 128, 0)
-        pyxel.bltm(0, 0, 1, 0, 0, 512, 128)
-        for doors in self.doors[self.camera].values():
-            doors.draw()
-        for buttons in self.buttons[self.camera].values():
-            buttons.draw()
-        self.player.draw()
+    def menu_difficulty(self) -> None:
+        self.current_menu = self.difficulty_menu
+        self.selected_option = 0
     
-    def get_nrooms(self) -> int:
-        for i in range(1, 16):
-            if tile_at(16*i, 0) == END_TILE:
-                return i
-        return 16
+    def difficulty_back(self) -> None:
+        self.current_menu = self.default_menu
+        self.selected_option = 0
+    
+    def change_difficulty(self) -> None:
+        self.difficulty = self.selected_option + 1
 
+    def update_menu(self) -> None:
+        if pyxel.btnp(pyxel.KEY_DOWN):
+            self.selected_option += 1
+        elif pyxel.btnp(pyxel.KEY_UP):
+            self.selected_option -= 1
+        self.selected_option %= len(self.current_menu)
+
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.current_menu[self.selected_option][1]()
+    
+    def draw_menu(self) -> None:
+        pyxel.bltm(0, 0, 0, 0, 0, 128, 128)
+        for i, option in enumerate(self.current_menu):
+            color = 7
+            if self.current_menu == self.difficulty_menu and i + 1 == self.difficulty:
+                color = 5
+            if i == self.selected_option:
+                color = 0
+            pyxel.text(42, 8 * (i - ((len(self.current_menu) + 1)/2)) + 72, option[0], color)
 
 if __name__ == "__main__":
     App()
