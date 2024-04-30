@@ -11,8 +11,6 @@ Tile = tuple[int, int]
 
 # region Constants
 
-SPAWN_X: int
-SPAWN_Y: int
 RIGHT, LEFT = False, True
 TRANSPARENT: int = 0 # used for transparency when drawing
 
@@ -294,7 +292,6 @@ class Player:
 class App:
     def __init__(self):
         global tile_at, tile_set
-        global SPAWN_X, SPAWN_Y
 
         self.difficulty: int = 1
 
@@ -319,7 +316,7 @@ class App:
                 tile = tile_at(x, y)
                 if tile == SPAWN_TILE:
                     tile_set(x, y, EMPTY_TILE)
-                    SPAWN_X, SPAWN_Y = x * 8, y * 8
+                    self.spawn: Tile = x * 8, y * 8
                 
                 elif tile in KEYS:
                     self.keys[x // 16][tile].add((x, y))
@@ -342,7 +339,6 @@ class App:
                     elif tile_at(x, y - 1) not in TOP_DOORS:
                         raise DoorError(f"Missing top door at {(x, y - 1)}")
     
-        self.spawn: Tile = (SPAWN_X, SPAWN_Y)
         self.player = Player(self.spawn)
         self.camera: int = 0
 
