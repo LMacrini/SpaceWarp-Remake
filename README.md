@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://raw.githubusercontent.com/ForkPrince/SpaceWarp/editor/img/menu/icon.png" width="256px" height="256px">
+    <img src="https://api.serversmp.xyz/upload/663156f1bc21c798b0b7d9de.webp" width="256px" height="256px">
 </p>
 
 <h1 align="center">SpaceWarp (remake)</h1>
