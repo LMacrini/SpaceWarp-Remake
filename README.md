@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://api.serversmp.xyz/upload/66315820bc21c798b0b7d9eb.gif" width="192px" height="192px">
+    <img src="https://api.serversmp.xyz/upload/66315820bc21c798b0b7d9eb.gif" width="160px" height="160px">
 </p>
 
 <h1 align="center">SpaceWarp (remake)</h1>
