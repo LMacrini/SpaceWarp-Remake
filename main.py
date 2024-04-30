@@ -295,6 +295,12 @@ class App:
         self.difficulty: int = 1
         self.spawn: Tile = (0, 0)
 
+        self.keys: list[dict[Tile, Keys]]
+        self.buttons: list[dict[Tile, Buttons]]
+        self.doors: list[dict[Tile, Doors]]
+        self.player: Player
+        self.camera: int
+
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
 
@@ -387,11 +393,12 @@ class App:
 
         self.nrooms: int = self.get_nrooms()
 
-        self.keys: list[dict[Tile, Keys]] = [{key : Keys(key) for key in KEYS} for _ in range(self.nrooms)]
-        self.buttons: list[dict[Tile, Buttons]] = [
+        # check the start of the __init__ function for the annotations
+        self.keys = [{key : Keys(key) for key in KEYS} for _ in range(self.nrooms)]
+        self.buttons = [
             {button : Buttons(button) for button in BUTTONS} for _ in range(self.nrooms)
         ]
-        self.doors: list[dict[Tile, Doors]] = [
+        self.doors = [
             {door : Doors(door) for door in TOP_DOORS} for _ in range(self.nrooms)
         ]
 
@@ -424,7 +431,7 @@ class App:
                         raise DoorError(f"Missing top door at {(x, y - 1)}")
     
         self.player = Player(self.spawn)
-        self.camera: int = 0
+        self.camera = 0
 
         self.save_state()
         self.game_state = PLAYING
