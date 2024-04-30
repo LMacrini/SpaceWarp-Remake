@@ -430,7 +430,7 @@ class App:
         self.game_state = PLAYING
     
     def get_help(self) -> None:
-        wb_open("https://github.com/LMacrini/SpaceWarp/blob/main/README.md")
+        wb_open("https://github.com/LMacrini/SpaceWarp-Remake/blob/main/README.md")
     
     def menu_difficulty(self) -> None:
         self.current_menu = self.difficulty_menu
