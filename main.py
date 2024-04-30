@@ -141,6 +141,7 @@ class Doors:
         self.locations: set[Tile] = set()
         self.state: bool = state
         self.timer: int = 0
+        self.animation_state: int = 8
     
     def add(self, tile: Tile) -> None:
         if not is_tile(tile):
@@ -150,16 +151,32 @@ class Doors:
     def update(self) -> None:
         if self.timer > 0:
             self.timer -= 1
+        
+        # for animation states: 0 is open and 8 is closed
+
+        if self.state and not self.timer:
+            if self.animation_state < 8:
+                self.animation_state += 1
+        else:
+            if self.animation_state > 0:
+                self.animation_state -= 1
+    
+    def draw_animated(self, x: int, y: int):
+        pyxel.blt(x * 8, y * 8, 0, self.sprite[0] * 8, 40 - self.animation_state, 8, self.animation_state)
+        pyxel.blt(x * 8, y * 8 + 16 - self.animation_state, 0, self.sprite[0] * 8, self.sprite[1] * 8 + 8, 8, self.animation_state)
     
     def draw(self) -> None:
         if self.state and not self.timer:
             for x, y in self.locations:
                 tile_set(x, y, self.sprite)
                 tile_set(x, y + 1, (self.sprite[0], self.sprite[1] + 1))
+                pyxel.blt(x * 8, y * 8, 0, 16, 32, 8, 16)
+                self.draw_animated(x, y)
         else:
             for x, y in self.locations:
                 tile_set(x, y, EMPTY_TILE)
                 tile_set(x, y + 1, EMPTY_TILE)
+                self.draw_animated(x, y)
     
     def open_door(self, key: Tile) -> None:
         if key == (7, self.sprite[0]):
