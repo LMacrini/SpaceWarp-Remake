@@ -14,10 +14,6 @@ Tile = tuple[int, int]
 RIGHT, LEFT = False, True
 TRANSPARENT: int = 0 # used for transparency when drawing
 
-YELLOW_KEY: Tile = (7, 4)
-RED_KEY: Tile = (7, 5)
-BLUE_KEY: Tile = (7, 6)
-
 KEYS: set[Tile] = {(7, y) for y in range(4, 7)}
 
 BUTTONS: set[Tile] = {(x, 6) for x in range(4, 7)}
