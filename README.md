@@ -3,9 +3,9 @@
 <p align="center">A game that barely works, now revamped.</p>
 
 <p align="center">
-    <a href="Play Game">https://lmacrini.github.io/SpaceWarp-Remake/</a>
+    <a href="https://lmacrini.github.io/SpaceWarp-Remake">Play Game</a>
     -
-    <a href="Download Game">https://github.com/LMacrini/SpaceWarp-Remake/actions</a>
+    <a href="https://github.com/LMacrini/SpaceWarp-Remake/actions">Download Game</a>
 </p>
 
 ## How to Play
