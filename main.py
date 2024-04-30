@@ -306,13 +306,13 @@ class App:
 
         self.game_state: int = MENU
 
-        self.default_menu: list[tuple] = [
+        self.default_menu: list[tuple[str, Callable]] = [
             ("Start", self.start),
             ("Difficulty", self.menu_difficulty),
             ("Help", self.get_help)
         ]
 
-        self.difficulty_menu: list[tuple] = [
+        self.difficulty_menu: list[tuple[str, Callable]] = [
             ("Easy", self.change_difficulty),
             ("Normal", self.change_difficulty),
             ("Hard", self.change_difficulty),
