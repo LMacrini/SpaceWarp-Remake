@@ -290,6 +290,7 @@ class App:
         global tile_at, tile_set
 
         self.difficulty: int = 1
+        self.spawn: Tile = (0, 0)
 
         pyxel.init(128, 128, title="SpaceWarp")
         pyxel.load("assets.pyxres")
@@ -312,7 +313,7 @@ class App:
                 tile = tile_at(x, y)
                 if tile == SPAWN_TILE:
                     tile_set(x, y, EMPTY_TILE)
-                    self.spawn: Tile = x * 8, y * 8
+                    self.spawn = x * 8, y * 8
                 
                 elif tile in KEYS:
                     self.keys[x // 16][tile].add((x, y))
