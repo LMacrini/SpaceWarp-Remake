@@ -316,6 +316,7 @@ class App:
         pyxel.load("assets.pyxres")
 
         self.game_state: int = MENU
+        pyxel.playm(3, loop=True)
 
         self.default_menu: list[tuple[str, Callable]] = [
             ("Start", self.start),
@@ -388,6 +389,7 @@ class App:
             self.end_frame = pyxel.frame_count
             self.total_time = (self.end_frame - self.start_frame) / 30
             self.game_state = END
+            pyxel.playm(3, loop=True)
 
     def draw(self) -> None:
         if self.game_state == MENU:
@@ -415,6 +417,8 @@ class App:
     # region Menu functions
     def start(self) -> None:
         global tile_at, tile_set
+
+        pyxel.playm(0, loop=True)
 
         self.start_frame: int = pyxel.frame_count
         self.end_frame: int
