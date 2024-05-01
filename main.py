@@ -224,7 +224,7 @@ class Player:
             if self.jumping == 0:
                 self.y += 2
         
-        elif pyxel.btn(pyxel.KEY_UP):
+        elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.KEY_SPACE):
             self.jumping = 12
 
         if (
