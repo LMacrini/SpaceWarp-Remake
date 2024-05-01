@@ -32,6 +32,9 @@ WALLS: set[Tile] = ({(x, y) for x in range(4, 8) for y in range(2)}
 
 COLLIDERS: set[Tile] = WALLS | DOORS
 
+END_SHIP_TOP_LEFT: Tile = (0, 4)
+END_SHIP: set[Tile] = {(x, y) for x in range(2) for y in range(4, 6)}
+
 MENU: int = 0
 PLAYING: int = 1
 END: int = 2
@@ -47,8 +50,8 @@ def is_tile(foo: Any):
     except:
         return False
 
-class DoorError(Exception):
-    """Misplaced door"""
+class TileError(Exception):
+    """Misplaced tile"""
 
 
 # region Keys
@@ -193,6 +196,7 @@ class Player:
         self.y: int = spawn[1]
         self.jumping: int = 0
         self.dead: bool = False
+        self.win = False
 
         self.direction: bool = direction
         self.sprite_x: int = 8
@@ -284,6 +288,8 @@ class Player:
                 keys[corner].collect(doors)
             elif corner in BUTTONS:
                 buttons[corner].press(self.x, self.y, doors)
+            elif corner in END_SHIP:
+                self.win = True
     
     def draw(self) -> None:
         # if self.dead: return
@@ -333,6 +339,9 @@ class App:
 
     # region App.update()
     def update(self) -> None:
+        if self.game_state == END:
+            return
+
         if self.game_state == MENU:
             self.update_menu()
             return
@@ -364,6 +373,9 @@ class App:
         
         for keys in self.keys[self.camera].values():
             keys.update()
+        
+        if self.player.win:
+            self.game_state = END
 
     def draw(self) -> None:
         if self.game_state == MENU:
@@ -376,6 +388,10 @@ class App:
             doors.draw()
         for buttons in self.buttons[self.camera].values():
             buttons.draw()
+        
+        if self.game_state == END:
+            self.draw_end()
+            return
         self.player.draw()
     
     def get_nrooms(self) -> int:
@@ -402,6 +418,8 @@ class App:
             {door : Doors(door) for door in TOP_DOORS} for _ in range(self.nrooms)
         ]
 
+        ship_locations: set[Tile] = set()
+
         for y in range(16):
             for x in range(self.nrooms * 16):
                 tile = tile_at(x, y)
@@ -418,22 +436,34 @@ class App:
                 
                 elif tile in TOP_DOORS:
                     if y == 16:
-                        raise DoorError("Top door cannot be at the bottom of the screen")
+                        raise TileError("Top door cannot be at the bottom of the screen")
                     elif tile_at(x, y + 1) in BOTTOM_DOORS:
                         self.doors[x // 16][tile].add((x, y))
                     else:
-                        raise DoorError(f"Missing bottom door at {(x, y + 1)}")
+                        raise TileError(f"Missing bottom door at {(x, y + 1)}")
                 
                 elif tile in BOTTOM_DOORS:
                     if y == 0:
-                        raise DoorError("Bottom door cannot be at the top of the screen")
+                        raise TileError("Bottom door cannot be at the top of the screen")
                     elif tile_at(x, y - 1) not in TOP_DOORS:
-                        raise DoorError(f"Missing top door at {(x, y - 1)}")
-    
+                        raise TileError(f"Missing top door at {(x, y - 1)}")
+
+                elif tile == END_SHIP_TOP_LEFT:
+                    ship_tiles: set[Tile] = {(x + i, y + j) for i in range(2) for j in range(2)}
+                    if any(tile_at(*ship_tile) not in END_SHIP for ship_tile in ship_tiles):
+                        raise TileError(f"Incomplete end ship at {x, y}")
+                    for ship_tile in ship_tiles:
+                        ship_locations.add(ship_tile)
+                
+                elif tile in END_SHIP and (x, y) not in ship_locations:
+                    raise TileError("Incomplete end ship")
+
+
         self.player = Player(self.spawn)
         self.camera = 0
 
         self.save_state()
+        self.game_started: bool = True
         self.game_state = PLAYING
     
     def get_help(self) -> None:
@@ -469,6 +499,34 @@ class App:
             if i == self.selected_option:
                 color = 0
             pyxel.text(42, 8 * (i - ((len(self.current_menu) + 1)/2)) + 72, option[0], color)
+    
+    def draw_end(self) -> None:
+        if self.game_started:
+            self.ship_height: int = 0
+            self.ship_locations: set[Tile] = set()
+            for y in range(16):
+                for x in range(self.nrooms * 16):
+                    tile = tile_at(x, y)
+                    if tile == END_SHIP_TOP_LEFT:
+                        self.ship_locations.add((x, y))
+                        self.clear_rectangle(x, y, 2, 2)
+
+            self.game_started = False
+
+        for ship in self.ship_locations:
+            pyxel.blt(ship[0] * 8, ship[1] * 8 - self.ship_height, 0, 0, 32, 16, 16, 0)
+            pyxel.blt(ship[0] * 8 + 4, ship[1] * 8 + 16 - self.ship_height, 0, 8, 16, 8, 8, 0)
+        self.ship_height += 1
+
+        
+        
+    def clear_rectangle(self, x: int, y: int, dx: int = 1, dy: int = 1) -> None:
+        for deltay in range(dy):
+            for deltax in range(dx):
+                tile_set(x + deltax, y + deltay, EMPTY_TILE)
+
+        
+
 
 if __name__ == "__main__":
     App()
