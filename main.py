@@ -3,6 +3,7 @@ from __future__ import annotations
 import pyxel
 from copy import deepcopy
 from webbrowser import open as wb_open
+from math import floor
 from typing import Callable, Any
 
 tile_at: Callable
@@ -49,6 +50,10 @@ def is_tile(foo: Any):
         )
     except:
         return False
+
+def round_half_up(n: float, decimals:int = 0):
+    multiplier = 10 ** decimals
+    return floor(n*multiplier + 0.5) / multiplier
 
 class TileError(Exception):
     """Misplaced tile"""
@@ -340,6 +345,8 @@ class App:
     # region App.update()
     def update(self) -> None:
         if self.game_state == END:
+            if pyxel.btn(pyxel.KEY_RETURN):
+                self.game_state = MENU
             return
 
         if self.game_state == MENU:
@@ -375,6 +382,8 @@ class App:
             keys.update()
         
         if self.player.win:
+            self.end_frame = pyxel.frame_count
+            self.total_time = (self.end_frame - self.start_frame) / 30
             self.game_state = END
 
     def draw(self) -> None:
@@ -404,6 +413,9 @@ class App:
     def start(self) -> None:
         global tile_at, tile_set
 
+        self.start_frame: int = pyxel.frame_count
+        self.end_frame: int
+
         tile_at = pyxel.tilemaps[self.difficulty].pget
         tile_set = pyxel.tilemaps[self.difficulty].pset
 
@@ -419,6 +431,7 @@ class App:
         ]
 
         ship_locations: set[Tile] = set()
+        ship_in_room: bool = False
 
         for y in range(16):
             for x in range(self.nrooms * 16):
@@ -449,6 +462,9 @@ class App:
                         raise TileError(f"Missing top door at {(x, y - 1)}")
 
                 elif tile == END_SHIP_TOP_LEFT:
+                    if ship_in_room:
+                        raise TileError("Cannot have 2 end ships in the same room")
+                    ship_in_room = True
                     ship_tiles: set[Tile] = {(x + i, y + j) for i in range(2) for j in range(2)}
                     if any(tile_at(*ship_tile) not in END_SHIP for ship_tile in ship_tiles):
                         raise TileError(f"Incomplete end ship at {x, y}")
@@ -457,6 +473,9 @@ class App:
                 
                 elif tile in END_SHIP and (x, y) not in ship_locations:
                     raise TileError("Incomplete end ship")
+                
+                if x % 16 == 0 and y % 16 == 0:
+                    ship_in_room = False
 
 
         self.player = Player(self.spawn)
@@ -503,22 +522,28 @@ class App:
     def draw_end(self) -> None:
         if self.game_started:
             self.ship_height: int = 0
-            self.ship_locations: set[Tile] = set()
+            self.ship: Tile
             for y in range(16):
-                for x in range(self.nrooms * 16):
-                    tile = tile_at(x, y)
-                    if tile == END_SHIP_TOP_LEFT:
-                        self.ship_locations.add((x, y))
-                        self.clear_rectangle(x, y, 2, 2)
+                for x in range(16):
+                    if tile_at(x + 16*self.camera, y) == END_SHIP_TOP_LEFT:
+                        self.ship = (x + 16*self.camera, y)
+                        self.clear_rectangle(x + 16*self.camera, y, 2, 2)
 
             self.game_started = False
 
-        for ship in self.ship_locations:
-            pyxel.blt(ship[0] * 8, ship[1] * 8 - self.ship_height, 0, 0, 32, 16, 16, 0)
-            pyxel.blt(ship[0] * 8 + 4, ship[1] * 8 + 16 - self.ship_height, 0, 8, 16, 8, 8, 0)
-        self.ship_height += 1
+        if self.ship[1] * 8 + 24 - self.ship_height > 0:
+            pyxel.blt(self.ship[0] * 8, self.ship[1] * 8 - self.ship_height, 0, 0, 32, 16, 16, 0)
+            pyxel.blt(self.ship[0] * 8 + 4, self.ship[1] * 8 + 16 - self.ship_height, 0, 8, 16, 8, 8, 0)
+            self.ship_height += 1
+        else:
+            self.camera = 0
+            pyxel.bltm(0, 0, 0, 0, 0, 128, 128)
+            pyxel.text(48, 48, "You win!", 7)
+            pyxel.text(40, 56, f"Time: {round_half_up(self.total_time)}s", 7)
+            pyxel.text(42, 72, "Difficulty:", 7)
+            pyxel.text(48, 80, self.difficulty_menu[self.difficulty - 1][0], 0)
 
-        
+
         
     def clear_rectangle(self, x: int, y: int, dx: int = 1, dy: int = 1) -> None:
         for deltay in range(dy):
