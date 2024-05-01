@@ -352,6 +352,9 @@ class App:
         if self.game_state == MENU:
             self.update_menu()
             return
+        
+        if pyxel.btnp(pyxel.KEY_Q):
+            self.game_state = MENU
 
         if self.camera != (self.player.x + 4) // 128:
             self.spawn = (
