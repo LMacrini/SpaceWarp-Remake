@@ -193,7 +193,6 @@ class Doors:
         if button[0] == self.sprite[0] and frames > self.timer:
             self.timer = frames
 
-
 # region Player
 class Player:
     def __init__(self, spawn: Tile = (0, 0), *, direction: bool = RIGHT):
@@ -480,7 +479,6 @@ class App:
                 if x % 16 == 0 and y % 16 == 0:
                     ship_in_room = False
 
-
         self.player = Player(self.spawn)
         self.camera = 0
 
@@ -546,8 +544,6 @@ class App:
             pyxel.text(42, 72, "Difficulty:", 7)
             pyxel.text(48, 80, self.difficulty_menu[self.difficulty - 1][0], 0)
 
-
-        
     def clear_rectangle(self, x: int, y: int, dx: int = 1, dy: int = 1) -> None:
         for deltay in range(dy):
             for deltax in range(dx):
