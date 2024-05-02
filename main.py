@@ -1,10 +1,11 @@
+"""This is the main file for SpaceWarp-Remake"""
 #region imports
 from __future__ import annotations
-import pyxel
 from copy import deepcopy
 from webbrowser import open as wb_open
 from math import floor
 from typing import Callable, Any
+import pyxel
 
 tile_at: Callable
 tile_set: Callable
@@ -40,18 +41,17 @@ MENU: int = 0
 PLAYING: int = 1
 END: int = 2
 
-def is_tile(foo: Any):
-    try:
-        return (
-            isinstance(foo, tuple) 
-            and len(foo) == 2 and 
-            isinstance(foo[0], int) and 
-            isinstance(foo[1], int)
-        )
-    except:
-        return False
+def is_tile(element: Any):
+    """Takes in any input, returns true if input is a tile (tuple[int, int])"""
+    return (
+        isinstance(element, tuple)
+        and len(element) == 2 and
+        isinstance(element[0], int) and
+        isinstance(element[1], int)
+    )
 
-def round_half_up(n: float, decimals:int = 0):
+def round_half_up(n: float, decimals: int = 0):
+    """Rounds a float to the nearest specified decimal digit (default is nearest unit)"""
     multiplier = 10 ** decimals
     return floor(n*multiplier + 0.5) / multiplier
 
@@ -61,31 +61,35 @@ class TileError(Exception):
 
 # region Keys
 class Keys:
-    def __init__(self, sprite: Tile = (0, 0), state: bool = True, color = None):
+    """Handles a set of keys of one type"""
+    def __init__(self, sprite: Tile = (0, 0), state: bool = True):
         self.locations: set[Tile] = set()
         self.state: bool = state
         self.sprite: Tile = sprite
 
     def draw(self) -> None: # Note: this is unused
+        """Draws all the keys in this class"""
         for x, y in self.locations:
             pyxel.blt(x * 8, y * 8, 0, self.sprite[0] * 8, self.sprite[1] * 8, 8, 8)
 
     def add(self, tile: Tile) -> None:
+        """Add a location tile to the set"""
         if not is_tile(tile):
             raise TypeError("Can only add tiles to Keys")
         self.locations.add(tile)
 
     def __iter__(self): # also unused but i thought it would be convenient
-        for tile in self.locations:
-            yield tile
-    
+        yield from self.locations
+
     def collect(self, doors: set[Doors]):
+        """Run this method when a key from the set is collected"""
         self.state = False
 
         for door in doors:
             door.open_door(self.sprite)
-    
+
     def update(self):
+        """Handles the keys on the tilemap"""
         if self.state:
             for x, y in self.locations:
                 tile_set(x, y, self.sprite)
@@ -95,26 +99,30 @@ class Keys:
 
 # region Buttons
 class Buttons:
+    """Handles a set of buttons of one type"""
     def __init__(self, sprite: Tile, state: int = 0):
         self.sprite: Tile = sprite
         self.locations: set[Tile] = set()
         self.state = state
-    
+
     def add(self, tile: Tile) -> None:
+        """Add a button tile to the set"""
         if not is_tile(tile):
             raise TypeError("Can only add tiles to Keys")
         self.locations.add(tile)
-    
+
     def update(self):
+        """Updates the state of the button"""
         if self.state > 0:
             self.state -= 1
 
     def press(self, x: int, y: int, doors: set[Doors]) -> None:
+        """Run when player is on a button to set the state"""
         for button in self.locations:
             if button[0] * 8 - 4 <= x <= button[0] * 8 + 4 and button[1] * 8 == y:
                 self.state = 150
             elif (
-                button[0] * 8 - 5 <= x <= button[0] * 8 + 5 
+                button[0] * 8 - 5 <= x <= button[0] * 8 + 5
                 and button[1] * 8 - 1 <= y <= button[1] * 8 and self.state <= 2
             ):
                 self.state = 2
@@ -123,11 +131,12 @@ class Buttons:
                 and button[1] * 8 - 2 < y <= button[1] * 8 and self.state <= 1
             ):
                 self.state = 1
-        
+
         for door in doors:
             door.button_open(self.sprite, self.state)
 
     def draw(self):
+        """Draws every button in the set"""
         sprite_x, sprite_y = self.sprite
         sprite_x *= 8
         sprite_y *= 8
@@ -143,22 +152,25 @@ class Buttons:
 
 # region Doors
 class Doors:
+    """Handles a set of doors of one type"""
     def __init__(self, sprite: Tile, state: bool = True, timer: int = 0):
         self.sprite: Tile = sprite
         self.locations: set[Tile] = set()
         self.state: bool = state
-        self.timer: int = 0
+        self.timer: int = timer
         self.animation_state: int = 8
-    
+
     def add(self, tile: Tile) -> None:
+        """Add a door tile to the set"""
         if not is_tile(tile):
             raise TypeError("Can only add tiles to Doors")
         self.locations.add(tile)
-    
+
     def update(self) -> None:
+        """Update the doors"""
         if self.timer > 0:
             self.timer -= 1
-        
+
         # for animation states: 0 is open and 8 is closed
 
         if self.state and not self.timer:
@@ -167,12 +179,24 @@ class Doors:
         else:
             if self.animation_state > 0:
                 self.animation_state -= 1
-    
+
     def draw_animated(self, x: int, y: int):
-        pyxel.blt(x * 8, y * 8, 0, self.sprite[0] * 8, 40 - self.animation_state, 8, self.animation_state)
-        pyxel.blt(x * 8, y * 8 + 16 - self.animation_state, 0, self.sprite[0] * 8, self.sprite[1] * 8 + 8, 8, self.animation_state)
-    
+        """Draws a door at its current state in the animation"""
+        pyxel.blt(
+            x * 8, y * 8,
+            0,
+            self.sprite[0] * 8, 40 - self.animation_state,
+            8, self.animation_state
+        )
+        pyxel.blt(
+            x * 8, y * 8 + 16 - self.animation_state,
+            0,
+            self.sprite[0] * 8, self.sprite[1] * 8 + 8,
+            8, self.animation_state
+        )
+
     def draw(self) -> None:
+        """Draws all of the doors and sets them in the tilemap"""
         if self.state and not self.timer:
             for x, y in self.locations:
                 tile_set(x, y, self.sprite)
@@ -184,17 +208,20 @@ class Doors:
                 tile_set(x, y, EMPTY_TILE)
                 tile_set(x, y + 1, EMPTY_TILE)
                 self.draw_animated(x, y)
-    
+
     def open_door(self, key: Tile) -> None:
+        """Opens the doors if the correct key is collected"""
         if key == (7, self.sprite[0]):
             self.state = False
-    
+
     def button_open(self, button: Tile, frames: int) -> None:
+        """Opens the doors if the correct button is pressed"""
         if button[0] == self.sprite[0] and frames > self.timer:
             self.timer = frames
 
 # region Player
 class Player:
+    """Handles the player"""
     def __init__(self, spawn: Tile = (0, 0), *, direction: bool = RIGHT):
         self.x: int = spawn[0]
         self.y: int = spawn[1]
@@ -206,23 +233,25 @@ class Player:
         self.sprite_x: int = 8
         self.sprite_y: int = 0
         self.walking_anim: bool = False
-    
+
     def corners(self) -> tuple[Tile, Tile, Tile, Tile]:
+        """Returns what tiles all four corners of the player are in"""
         return (
             tile_at(self.x // 8, self.y // 8),
             tile_at(self.x // 8, (self.y + 7) // 8),
             tile_at((self.x + 7) // 8, self.y // 8),
             tile_at((self.x + 7) // 8, (self.y + 7) // 8)
         )
-    
+
     # region Player.update_position()
     def update_position(self) -> None:
+        """Updates the position of the player"""
         if (tile_at(self.x // 8, self.y // 8 + 1) not in COLLIDERS
             and tile_at((self.x + 7) // 8, self.y // 8 + 1) not in COLLIDERS
         ):
             if self.jumping == 0:
                 self.y += 2
-        
+
         elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.KEY_SPACE):
             self.jumping = 12
 
@@ -235,8 +264,8 @@ class Player:
         if self.jumping > 0:
             self.jumping -= 1
             self.y -= 2
-        
-        
+
+
         if (pyxel.btn(pyxel.KEY_RIGHT)
             and tile_at(self.x // 8 + 1, self.y // 8) not in COLLIDERS
             and tile_at(self.x // 8 + 1, (self.y + 7) // 8) not in COLLIDERS
@@ -244,7 +273,7 @@ class Player:
             self.x += 1
             self.direction = RIGHT
             self.walking_anim = not self.walking_anim
-        
+
         elif self.x > 0 and pyxel.btn(pyxel.KEY_LEFT) and (
             tile_at((self.x - 1) // 8, self.y // 8) not in COLLIDERS
             and tile_at((self.x - 1) // 8, (self.y + 7) // 8) not in COLLIDERS
@@ -252,31 +281,31 @@ class Player:
             self.x -= 1
             self.direction = LEFT
             self.walking_anim = not self.walking_anim
-        
+
         else:
             self.walking_anim = False
 
     # region Player.update()
     def update(
-            self, 
-            spawn: Tile = (0, 0), 
+            self,
+            spawn: Tile = (0, 0),
             keys: dict[Tile, Keys] | None = None,
             buttons: dict[Tile, Buttons] | None = None,
             doors: set[Doors] | None = None
         ) -> None:
-
+        """Updates the player"""
         if keys is None:
             keys = {}
         if buttons is None:
             buttons = {}
         if doors is None:
             doors = set()
-        
+
         self.update_position()
 
         corners = self.corners()
         # print(corners)
-        
+
         # just look at the assets file man, this is stupid. should I just have changed it? probably
         self.sprite_x = 8*(self.direction^self.walking_anim) + 8 if self.jumping == 0 else 24
         self.sprite_y = 8*self.direction
@@ -286,7 +315,7 @@ class Player:
             self.x, self.y = spawn
             self.jumping = 0
             self.direction = RIGHT
-        
+
         for corner in corners:
             if corner in KEYS:
                 keys[corner].collect(doors)
@@ -294,13 +323,15 @@ class Player:
                 buttons[corner].press(self.x, self.y, doors)
             elif corner in END_SHIP:
                 self.win = True
-    
+
     def draw(self) -> None:
+        """Draws the player"""
         # if self.dead: return
         pyxel.blt(self.x, self.y, 0, self.sprite_x, self.sprite_y, 8, 8, TRANSPARENT)
 
 # region App
 class App:
+    """The main app itself"""
     def __init__(self):
         self.difficulty: int = 1
         self.spawn: Tile = (0, 0)
@@ -329,20 +360,23 @@ class App:
             ("Lunatic", self.change_difficulty),
             ("Back", self.difficulty_back)
         ]
-        
+
         self.selected_option: int = 0
         self.current_menu: list[tuple] = self.default_menu
 
         pyxel.run(self.update, self.draw)
-    
+
     def save_state(self) -> None:
+        """Saves the current state of the game"""
         self.saved_state = deepcopy((self.keys, self.buttons, self.doors))
-    
+
     def load_state(self) -> None:
+        """Loads the current state of the game"""
         self.keys, self.buttons, self.doors = deepcopy(self.saved_state)
 
     # region App.update()
     def update(self) -> None:
+        """Updates the game"""
         if self.game_state == END:
             if pyxel.btn(pyxel.KEY_RETURN):
                 self.game_state = MENU
@@ -351,22 +385,22 @@ class App:
         if self.game_state == MENU:
             self.update_menu()
             return
-        
+
         if pyxel.btnp(pyxel.KEY_Q):
             self.game_state = MENU
 
         if self.camera != (self.player.x + 4) // 128:
             self.spawn = (
-                self.player.x + 4 - 8 * int(self.camera > (self.player.x + 4) // 128), 
+                self.player.x + 4 - 8 * int(self.camera > (self.player.x + 4) // 128),
                 self.player.y
             )
             self.camera = (self.player.x + 4) // 128
             self.save_state()
 
         self.player.update(
-            self.spawn, 
-            self.keys[self.camera], 
-            self.buttons[self.camera], 
+            self.spawn,
+            self.keys[self.camera],
+            self.buttons[self.camera],
             set(self.doors[self.camera].values())
         )
 
@@ -379,16 +413,17 @@ class App:
 
         for buttons in self.buttons[self.camera].values():
             buttons.update()
-        
+
         for keys in self.keys[self.camera].values():
             keys.update()
-        
+
         if self.player.win:
             self.end_frame = pyxel.frame_count
             self.total_time = (self.end_frame - self.start_frame) / 30
             self.game_state = END
 
     def draw(self) -> None:
+        """Draws the game"""
         if self.game_state == MENU:
             self.draw_menu()
             return
@@ -399,20 +434,25 @@ class App:
             doors.draw()
         for buttons in self.buttons[self.camera].values():
             buttons.draw()
-        
+
         if self.game_state == END:
             self.draw_end()
             return
         self.player.draw()
-    
+
     def get_nrooms(self) -> int:
+        """Gets the number of rooms of the current difficulty"""
         for i in range(1, 16):
             if tile_at(16*i, 0) == END_TILE:
                 return i
         return 16
-    
+
     # region Menu functions
     def start(self) -> None:
+        """
+        Sets all of the information needed when the game starts
+        Runs when start button is pressed in the menu
+        """
         global tile_at, tile_set
 
         self.start_frame: int = pyxel.frame_count
@@ -441,26 +481,26 @@ class App:
                 if tile == SPAWN_TILE:
                     tile_set(x, y, EMPTY_TILE)
                     self.spawn = x * 8, y * 8
-                
+
                 elif tile in KEYS:
                     self.keys[x // 16][tile].add((x, y))
                     #  tile_set(x, y, EMPTY_TILE)
-                
+
                 elif tile in BUTTONS:
                     self.buttons[x // 16][tile].add((x, y))
-                
+
                 elif tile in TOP_DOORS:
                     if y == 16:
                         raise TileError("Top door cannot be at the bottom of the screen")
-                    elif tile_at(x, y + 1) in BOTTOM_DOORS:
+                    if tile_at(x, y + 1) in BOTTOM_DOORS:
                         self.doors[x // 16][tile].add((x, y))
                     else:
                         raise TileError(f"Missing bottom door at {(x, y + 1)}")
-                
+
                 elif tile in BOTTOM_DOORS:
                     if y == 0:
                         raise TileError("Bottom door cannot be at the top of the screen")
-                    elif tile_at(x, y - 1) not in TOP_DOORS:
+                    if tile_at(x, y - 1) not in TOP_DOORS:
                         raise TileError(f"Missing top door at {(x, y - 1)}")
 
                 elif tile == END_SHIP_TOP_LEFT:
@@ -472,10 +512,10 @@ class App:
                         raise TileError(f"Incomplete end ship at {x, y}")
                     for ship_tile in ship_tiles:
                         ship_locations.add(ship_tile)
-                
+
                 elif tile in END_SHIP and (x, y) not in ship_locations:
                     raise TileError("Incomplete end ship")
-                
+
                 if x % 16 == 0 and y % 16 == 0:
                     ship_in_room = False
 
@@ -485,22 +525,27 @@ class App:
         self.save_state()
         self.game_started: bool = True
         self.game_state = PLAYING
-    
+
     def get_help(self) -> None:
+        """Opens the help page"""
         wb_open("https://github.com/LMacrini/SpaceWarp-Remake/blob/main/README.md")
-    
+
     def menu_difficulty(self) -> None:
+        """Changes the menu to the difficulty selection"""
         self.current_menu = self.difficulty_menu
         self.selected_option = 0
-    
+
     def difficulty_back(self) -> None:
+        """Changes the menu from the difficulty selection back to the default menu"""
         self.current_menu = self.default_menu
         self.selected_option = 0
-    
+
     def change_difficulty(self) -> None:
+        """Changes the difficulty of the game to the selected option"""
         self.difficulty = self.selected_option + 1
 
     def update_menu(self) -> None:
+        """Updates the menu"""
         if pyxel.btnp(pyxel.KEY_DOWN):
             self.selected_option += 1
         elif pyxel.btnp(pyxel.KEY_UP):
@@ -509,8 +554,9 @@ class App:
 
         if pyxel.btnp(pyxel.KEY_RETURN):
             self.current_menu[self.selected_option][1]()
-    
+
     def draw_menu(self) -> None:
+        """Draws the menu"""
         pyxel.bltm(0, 0, 0, 0, 0, 128, 128)
         for i, option in enumerate(self.current_menu):
             color = 7
@@ -519,8 +565,9 @@ class App:
             if i == self.selected_option:
                 color = 0
             pyxel.text(42, 8 * (i - ((len(self.current_menu) + 1)/2)) + 72, option[0], color)
-    
+
     def draw_end(self) -> None:
+        """Draws the end animation and end screen"""
         if self.game_started:
             self.ship_height: int = 0
             self.ship: Tile
@@ -534,7 +581,13 @@ class App:
 
         if self.ship[1] * 8 + 24 - self.ship_height > 0:
             pyxel.blt(self.ship[0] * 8, self.ship[1] * 8 - self.ship_height, 0, 0, 32, 16, 16, 0)
-            pyxel.blt(self.ship[0] * 8 + 4, self.ship[1] * 8 + 16 - self.ship_height, 0, 8, 16, 8, 8, 0)
+            pyxel.blt(
+                self.ship[0] * 8 + 4, self.ship[1] * 8 + 16 - self.ship_height,
+                0,
+                8, 16,
+                8, 8,
+                0
+            )
             self.ship_height += 1
         else:
             self.camera = 0
@@ -545,11 +598,12 @@ class App:
             pyxel.text(48, 80, self.difficulty_menu[self.difficulty - 1][0], 0)
 
     def clear_rectangle(self, x: int, y: int, dx: int = 1, dy: int = 1) -> None:
+        """Sets a rectangle in the current tilemap to be empty"""
         for deltay in range(dy):
             for deltax in range(dx):
                 tile_set(x + deltax, y + deltay, EMPTY_TILE)
 
-        
+
 
 if __name__ == "__main__":
     App()
