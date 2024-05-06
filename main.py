@@ -27,7 +27,7 @@ DOORS: set[Tile] = TOP_DOORS | BOTTOM_DOORS
 
 EMPTY_TILE: Tile = (0, 0)
 END_TILE: Tile = (0, 1)
-SPAWN_TILE: Tile = (3, 4)
+SPAWN_TILE: set[Tile] = {(3, 4)}
 FIRES: set[Tile] = {(x, y) for x in range(2) for y in range(2, 4)}
 WALLS: set[Tile] = ({(x, y) for x in range(4, 8) for y in range(2)}
                     | {(x, y) for x in range(2, 6) for y in range(2, 4)})
@@ -113,8 +113,7 @@ class Buttons:
 
     def update(self):
         """Updates the state of the button"""
-        if self.state > 0:
-            self.state -= 1
+        self.state = max(0, self.state - 1)
 
     def press(self, x: int, y: int, doors: set[Doors]) -> None:
         """Run when player is on a button to set the state"""
@@ -168,8 +167,7 @@ class Doors:
 
     def update(self) -> None:
         """Update the doors"""
-        if self.timer > 0:
-            self.timer -= 1
+        self.timer = max(0, self.timer - 1)
 
         # for animation states: 0 is open and 8 is closed
 
@@ -219,6 +217,24 @@ class Doors:
         if button[0] == self.sprite[0] and frames > self.timer:
             self.timer = frames
 
+class PlayerSprite:
+    """Handles the player's sprite"""
+    def __init__(self, direction: bool = RIGHT):
+        self.x: int = 8
+        self.y: int = 0
+        self.dir: bool = direction
+
+    def update(self, moving: bool, jumping: bool) -> None:
+        """Updates the sprite"""
+        # just look at the assets file man, this is stupid. should I just have changed it? probably
+        self.x = 8*(self.dir^moving) + 8 if jumping == 0 else 24
+        self.y = 8*self.dir
+
+
+    def draw(self, x: int, y: int) -> None:
+        """Draws the player"""
+        pyxel.blt(x, y, 0, self.x, self.y, 8, 8, TRANSPARENT)
+
 # region Player
 class Player:
     """Handles the player"""
@@ -228,11 +244,8 @@ class Player:
         self.jumping: int = 0
         self.dead: bool = False
         self.win = False
-
-        self.direction: bool = direction
-        self.sprite_x: int = 8
-        self.sprite_y: int = 0
-        self.walking_anim: bool = False
+        self.sprite: PlayerSprite = PlayerSprite(direction)
+        self.moving: bool = False
 
     def corners(self) -> tuple[Tile, Tile, Tile, Tile]:
         """Returns what tiles all four corners of the player are in"""
@@ -271,19 +284,19 @@ class Player:
             and tile_at(self.x // 8 + 1, (self.y + 7) // 8) not in COLLIDERS
         ):
             self.x += 1
-            self.direction = RIGHT
-            self.walking_anim = not self.walking_anim
+            self.sprite.dir = RIGHT
+            self.moving = not self.moving
 
         elif self.x > 0 and pyxel.btn(pyxel.KEY_LEFT) and (
             tile_at((self.x - 1) // 8, self.y // 8) not in COLLIDERS
             and tile_at((self.x - 1) // 8, (self.y + 7) // 8) not in COLLIDERS
         ):
             self.x -= 1
-            self.direction = LEFT
-            self.walking_anim = not self.walking_anim
+            self.sprite.dir = LEFT
+            self.moving = not self.moving
 
         else:
-            self.walking_anim = False
+            self.moving = False
 
     # region Player.update()
     def update(
@@ -306,15 +319,14 @@ class Player:
         corners = self.corners()
         # print(corners)
 
-        # just look at the assets file man, this is stupid. should I just have changed it? probably
-        self.sprite_x = 8*(self.direction^self.walking_anim) + 8 if self.jumping == 0 else 24
-        self.sprite_y = 8*self.direction
+        self.sprite.update(self.moving, self.jumping)
+
 
         if pyxel.btn(pyxel.KEY_R) or any((tile in FIRES for tile in corners)):
             self.dead = True
             self.x, self.y = spawn
             self.jumping = 0
-            self.direction = RIGHT
+            self.sprite.dir = RIGHT
 
         for corner in corners:
             if corner in KEYS:
@@ -326,8 +338,8 @@ class Player:
 
     def draw(self) -> None:
         """Draws the player"""
-        # if self.dead: return
-        pyxel.blt(self.x, self.y, 0, self.sprite_x, self.sprite_y, 8, 8, TRANSPARENT)
+        self.sprite.draw(self.x, self.y)
+
 
 # region App
 class App:
@@ -478,7 +490,7 @@ class App:
         for y in range(16):
             for x in range(self.nrooms * 16):
                 tile = tile_at(x, y)
-                if tile == SPAWN_TILE:
+                if tile in SPAWN_TILE:
                     tile_set(x, y, EMPTY_TILE)
                     self.spawn = x * 8, y * 8
 
