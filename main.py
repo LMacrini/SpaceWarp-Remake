@@ -441,7 +441,7 @@ class App:
             return
 
         pyxel.camera(self.camera * 128, 0)
-        pyxel.bltm(0, 0, self.difficulty, 0, 0, 512, 128)
+        pyxel.bltm(0, 0, self.difficulty, 0, 0, self.nrooms * 128, 128)
         for doors in self.doors[self.camera].values():
             doors.draw()
         for buttons in self.buttons[self.camera].values():
