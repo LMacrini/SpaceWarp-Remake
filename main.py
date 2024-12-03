@@ -442,7 +442,7 @@ class App:
             return
 
         pyxel.camera(self.camera * 128, 0)
-        pyxel.bltm(0, 0, 5, 0, 0, 512, 128)
+        pyxel.bltm(0, 0, self.difficulty, 0, 0, self.nrooms * 128, 128)
         for doors in self.doors[self.camera].values():
             doors.draw()
         for buttons in self.buttons[self.camera].values():
@@ -612,11 +612,11 @@ class App:
             pyxel.text(42, 72, "Difficulty:", 7)
             pyxel.text(48, 80, self.difficulty_menu[self.difficulty - 1][0], 0)
 
-    def clear_rectangle(self, x: int, y: int, dx: int = 1, dy: int = 1) -> None:
+    def clear_rectangle(self, x: int, y: int, w: int = 1, h: int = 1) -> None:
         """Sets a rectangle in the current tilemap to be empty"""
-        for deltay in range(dy):
-            for deltax in range(dx):
-                tile_set(x + deltax, y + deltay, EMPTY_TILE)
+        for dy in range(h):
+            for dx in range(w):
+                tile_set(x + dx, y + dy, EMPTY_TILE)
 
 
 

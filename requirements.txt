@@ -1,2 +1,2 @@
-pyinstaller==6.6.0
+pyinstaller==6.11.0
 pyxel==2.0.10
